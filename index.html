@@ -766,7 +766,7 @@ const setHH=()=>{const h=document.querySelector('header');if(h)document.document
 setHH();addEventListener('resize',setHH);addEventListener('load',setHH);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(setHH);
 r();
 </script>
-<style>>
+<style>
 #hamidiInstallBanner {
   display: none;
   position: fixed;
@@ -805,7 +805,7 @@ r();
     التصميم وحساب التكاليف في مكان واحد
   </div>
   <button id="hamidiInstallButton">
-    <span>⬇</span> تثبيت التطبيق
+    ⬇ تثبيت التطبيق
   </button>
 </div>
 
@@ -818,33 +818,37 @@ r();
 
   const isInstalled =
     window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
     window.navigator.standalone === true;
 
-  if (isInstalled) return;
+  if (isInstalled) {
+    banner.remove();
+    return;
+  }
 
   let installPrompt = null;
-
-  banner.style.display = "block";
 
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     installPrompt = event;
+    banner.style.display = "block";
   });
 
+  banner.style.display = "block";
+
   button.addEventListener("click", async () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      await installPrompt.userChoice;
-      installPrompt = null;
-    } else {
-      alert(
-        "لتثبيت التطبيق: افتح قائمة Chrome (⋮) واختر إضافة إلى الشاشة الرئيسية أو تثبيت التطبيق."
-      );
+    if (!installPrompt) {
+      alert("افتح قائمة Chrome واختر تثبيت التطبيق.");
+      return;
     }
+
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
   });
 
   window.addEventListener("appinstalled", () => {
-    banner.style.display = "none";
+    banner.remove();
   });
 })();
 </script>
