@@ -765,4 +765,88 @@ function dAll(v){if(v==='')return;const u=U();u.cf=+v||0;u.cd=+v||0;sv();r()}
 const setHH=()=>{const h=document.querySelector('header');if(h)document.documentElement.style.setProperty('--hh',h.offsetHeight+'px')};
 setHH();addEventListener('resize',setHH);addEventListener('load',setHH);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(setHH);
 r();
+  
+<style>
+#hamidiInstallBanner {
+  display: none;
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 999999;
+  background: #174c38;
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #0004;
+  direction: rtl;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+#hamidiInstallBanner button {
+  background: #e6bd65;
+  color: #173d2e;
+  border: 0;
+  padding: 11px 22px;
+  border-radius: 9px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+}
+</style>
+
+<div id="hamidiInstallBanner">
+  <div style="font-size:17px;font-weight:bold">
+    حمّل تطبيق Hamidi Studio
+  </div>
+  <div style="font-size:13px;margin-top:5px">
+    التصميم وحساب التكاليف في مكان واحد
+  </div>
+  <button id="hamidiInstallButton">
+    <span>⬇</span> تثبيت التطبيق
+  </button>
+</div>
+
+<script>
+(() => {
+  const banner = document.getElementById("hamidiInstallBanner");
+  const button = document.getElementById("hamidiInstallButton");
+
+  if (!banner || !button) return;
+
+  const isInstalled =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  if (isInstalled) return;
+
+  let installPrompt = null;
+
+  banner.style.display = "block";
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    installPrompt = event;
+  });
+
+  button.addEventListener("click", async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+    } else {
+      alert(
+        "لتثبيت التطبيق: افتح قائمة Chrome (⋮) واختر إضافة إلى الشاشة الرئيسية أو تثبيت التطبيق."
+      );
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    banner.style.display = "none";
+  });
+})();
+</script>
+  
 </script></body></html>
