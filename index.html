@@ -768,83 +768,163 @@ r();
 </script>
 <style>
 #hamidiInstallBanner {
-  display: none;
   position: fixed;
-  bottom: 12px;
-  left: 12px;
-  right: 12px;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  max-width: 390px;
+  margin: auto;
   z-index: 999999;
-  background: #174c38;
-  color: white;
-  padding: 14px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px #0004;
+  display: none;
   direction: rtl;
-  text-align: center;
+  text-align: right;
+  background: #174c38;
+  color: #fff;
+  padding: 13px 15px;
+  border-radius: 13px;
+  box-shadow: 0 4px 20px #0003;
   font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+#hamidiInstallBanner .install-title {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+#hamidiInstallBanner .install-desc {
+  font-size: 12px;
+  opacity: .9;
+  margin-bottom: 10px;
+}
+
+#hamidiInstallBanner .install-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 #hamidiInstallBanner button {
+  border: 0;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-weight: bold;
+}
+
+#hamidiInstallButton {
   background: #e6bd65;
   color: #173d2e;
-  border: 0;
-  padding: 11px 22px;
-  border-radius: 9px;
-  font-size: 16px;
-  font-weight: bold;
+  flex: 1;
+}
+
+#hamidiInstallClose {
+  background: #ffffff20;
+  color: white;
+  padding: 9px 12px;
+}
+
+#hamidiInstallHelp {
+  display: none;
+  font-size: 12px;
+  line-height: 1.8;
   margin-top: 10px;
-  cursor: pointer;
+  padding-top: 9px;
+  border-top: 1px solid #ffffff35;
 }
 </style>
 
 <div id="hamidiInstallBanner">
-  <div style="font-size:17px;font-weight:bold">
-    حمّل تطبيق Hamidi Studio
-  </div>
-  <div style="font-size:13px;margin-top:5px">
+  <div class="install-title">حمّل تطبيق Hamidi Studio</div>
+  <div class="install-desc">
     التصميم وحساب التكاليف في مكان واحد
   </div>
-  <button id="hamidiInstallButton">
-    ⬇ تثبيت التطبيق
-  </button>
+  <div class="install-actions">
+    <button id="hamidiInstallButton">⬇ تثبيت التطبيق</button>
+    <button id="hamidiInstallClose" aria-label="إغلاق">✕</button>
+  </div>
+  <div id="hamidiInstallHelp"></div>
 </div>
 
 <script>
 (() => {
   const banner = document.getElementById("hamidiInstallBanner");
   const button = document.getElementById("hamidiInstallButton");
+  const close = document.getElementById("hamidiInstallClose");
+  const help = document.getElementById("hamidiInstallHelp");
 
-  if (!banner || !button) return;
+  if (!banner || !button || !close || !help) return;
 
-  const isInstalled =
+  const isInstalled = () =>
     window.matchMedia("(display-mode: standalone)").matches ||
     window.matchMedia("(display-mode: fullscreen)").matches ||
     window.navigator.standalone === true;
 
-  if (isInstalled) {
+  if (isInstalled()) {
     banner.remove();
     return;
   }
 
   let installPrompt = null;
 
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const isAndroid = /android/i.test(navigator.userAgent);
+
+  const showHelp = () => {
+    help.style.display = "block";
+
+    if (isIOS) {
+      help.textContent =
+        "لتثبيت التطبيق: اضغط مشاركة من المتصفح، ثم اختر إضافة إلى الشاشة الرئيسية، وبعدها اضغط إضافة.";
+    } else if (isAndroid) {
+      help.textContent =
+        "لو لم تظهر نافذة التثبيت: افتح قائمة المتصفح ⋮ ثم اختر تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.";
+    } else {
+      help.textContent =
+        "من قائمة المتصفح ابحث عن تثبيت الصفحة كتطبيق أو Install app.";
+    }
+  };
+
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     installPrompt = event;
-    banner.style.display = "block";
   });
 
   banner.style.display = "block";
 
   button.addEventListener("click", async () => {
-    if (!installPrompt) {
-      alert("افتح قائمة Chrome واختر تثبيت التطبيق.");
+    if (isInstalled()) {
+      banner.remove();
       return;
     }
 
-    installPrompt.prompt();
-    await installPrompt.userChoice;
-    installPrompt = null;
+    if (installPrompt) {
+      const promptEvent = installPrompt;
+      installPrompt = null;
+
+      try {
+        await promptEvent.prompt();
+        const result = await promptEvent.userChoice;
+
+        if (result && result.outcome === "accepted") {
+          banner.remove();
+          return;
+        }
+      } catch (e) {}
+
+      showHelp();
+      return;
+    }
+
+    showHelp();
+  });
+
+  close.addEventListener("click", () => {
+    banner.remove();
   });
 
   window.addEventListener("appinstalled", () => {
